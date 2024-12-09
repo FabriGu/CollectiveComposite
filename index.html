@@ -1,0 +1,82 @@
+<!--
+  👋 Hello! This is an ml5.js example made and shared with ❤️.
+  Learn more about the ml5.js project: https://ml5js.org/
+  ml5.js license and Code of Conduct: https://github.com/ml5js/ml5-next-gen/blob/main/LICENSE.md
+
+  This example demonstrates face tracking on live video through ml5.faceMesh.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ml5.js faceMesh Webcam Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+    <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+    
+    <script src="https://unpkg.com/p5-webserial@0.1.1/build/p5.webserial.js"></script>
+    <link rel="stylesheet" href="https://use.typekit.net/qzn1kdb.css">
+    <link rel="stylesheet" href="./css/display.css" />
+  </head>
+  <body>
+    <div id="contentWrapper">
+      <div id="start">
+        <h1 id="header" class="whiteStyle headerStyle">COLLECTIVE COMPOSITE</h1>
+        <h1 id="instruction" class="whiteStyle instructionsStyle">PRESS THE SWITCH ON THE FLOOR TO BEGIN</h1>
+        <div id="arrowCont">
+          <!-- <img id="arrow" src="./assets/downArrow.png" alt="arrow" /> -->
+          <svg id="arrow" xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 24 24"><path fill="currentColor" d="M11 4h2v12h2v2h-2v2h-2v-2H9v-2h2zM7 14v2h2v-2zm0 0v-2H5v2zm10 0v2h-2v-2zm0 0v-2h2v2z"/></svg>        </div>
+      </div>
+    </div>
+    
+    <div class="squareTimer invisible">
+      <div id="mainTextTimer" class="mainTextContainer">
+        <h1 id="timerHeader" class="headerStyle">Step 1</h1>
+        <h1 id="timerInstructions" class="instructionsStyle">Look into the camera</h1>
+      </div>
+      
+      <div id="timerImgContainer">
+        <!-- <img id="camera" src="./assets/cameraSVG.svg"/> -->
+        <!-- <svg width="368" height="368" viewBox="0 0 368 368" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <mask id="path-1-inside-1_591_1359" fill="white">
+          <path d="M0 0H368V368H0V0Z"/>
+          </mask>
+          <path d="M0 0V-12H-12V0H0ZM368 0H380V-12H368V0ZM368 368V380H380V368H368ZM0 368H-12V380H0V368ZM0 12H368V-12H0V12ZM356 0V368H380V0H356ZM368 356H0V380H368V356ZM12 368V0H-12V368H12Z" fill="white" mask="url(#path-1-inside-1_591_1359)"/>
+          <path d="M304 76V64H64V76H52V292H64V304H304V292H316V76H304ZM76 88H148V100H76V88ZM244 244H232V268H208V280H160V268H136V244H124V196H136V172H160V160H208V172H232V196H244V244ZM292 136H76V124H148V112H160V100H172V88H292V136Z" fill="white"/>
+          <path d="M220 196V244H208V256H160V244H148V196H160V232H172V208H196V196H160V184H208V196H220Z" fill="white"/>
+        </svg> -->
+        <img id="lineArrow" src="./assets/lineDown.png"/>
+        <h1 class="timerText"></h1>
+      </div>
+    </div>
+
+    <div id="processing" class="invisible">
+      <div class="loader"></div>
+      <h1 id="processingHeader" class="instructionsStyle">PROCESSING AND CREATING YOUR IMAGE</h1>
+    </div>
+
+    <div id="placementScreen" class="invisible">
+      <div class="mainTextContainer">
+        <h1 id="placementHeader" class="headerStyle">Step 2</h1>
+        <h1 id="placementInstructions" class="instructionsStyle">Collect your print and place it on the grid as shown</h1>
+      </div>
+      
+      <!-- <div> -->
+        <div id="previewContainer">
+          
+        </div>
+        <div id="placementImgContainer">
+          <img id="greyArrow" src="./assets/greyLineDown.png" alt="arrow" />
+        </div>
+
+        <div id="gridContainer"></div>
+    </div>
+    
+
+    <script src="sketch.js"></script>
+    <script src="./display.js"></script>
+   
+  </body>
+</html>
