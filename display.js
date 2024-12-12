@@ -93,7 +93,7 @@ let experiencing = false;
 let timer;
 // let scale = 1;
 let count;
-let duration = 8;
+let duration = 5;
 let buttonInput = 0; // Initialize buttonInput
 
 let timerOn = false;

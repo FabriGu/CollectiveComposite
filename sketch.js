@@ -270,12 +270,11 @@ const LETTER_BITMAPS = [
     ]
    ];
 
-
-const askForPort = true; // Set to false after first connection
-const serial = new p5.WebSerial();
+const askForPort = true; // Set to false after first connection 
+const serial = new p5.WebSerial(); // set up new serial object
 
 // Grid configuration
-const GRID_SIZE = 7;
+const GRID_SIZE = 7; // define the grid size (defines an equal width and height grid)
 let boxWidth, boxHeight;
 // let boxWidth = 368/ GRID_SIZE;
 // let boxHeight = 368/ GRID_SIZE;
@@ -296,7 +295,6 @@ let portButton;
 let leftEyeKeypoint = 33;
 let rightEyeKeypoint = 263;
 
-
 // global size variables 
 const PRINTER_IMAGE_WIDTH = 384;  // Desired width in pixels
 const PRINTER_IMAGE_HEIGHT = 384; // Desired height in pixels
@@ -304,6 +302,7 @@ const PRINTER_IMAGE_HEIGHT = 384; // Desired height in pixels
 // CLAUDE: Update BYTES_PER_ROW calculation based on new width
 const BYTES_PER_ROW = PRINTER_IMAGE_HEIGHT / 8; // Number of bytes needed for each row
 
+// mae inString a global variable so can be updated by serialEvent and then accessed to confirm rows
 let inString= null;
 
 function preload() {
@@ -312,9 +311,10 @@ function preload() {
 
 function setup() {
   let canvasX = 640;
-    let canvasY = 480;
+  let canvasY = 480;
   createCanvas(canvasX, canvasY);
 
+  // very important to set pixel density to 1 to avoid scaling issues with image
   pixelDensity(1);
   
   // Setup WebSerial
@@ -501,16 +501,6 @@ async function sampleNextBox() {
   console.log("Box Index: " + boxIndex);
   console.log(getGridCoordinate(GRID_SIZE, boxIndex))
   
-
-
-//   serial.write('C'); 
-//   //break down the coordinates into row and column as chars
-//     serial.write(coordinates.charAt(0));
-//     serial.write('C'); 
-//     serial.write(coordinates.charAt(1));
-//     console.log(coordinates.charAt(0), coordinates.charAt(1));
-//   serial.write('');
-
   let row = floor(boxIndex / GRID_SIZE);
   let col = boxIndex % GRID_SIZE;
   
@@ -527,17 +517,6 @@ async function sampleNextBox() {
   // Create printer preview
   let printerPreview = simulatePrinterOutput(sampledImage);
 //   sampledImage = printerPreview;
-  
-//   // Display preview (add this element in your HTML)
-//   let previewDiv = document.getElementById('printer-preview');
-//   if (!previewDiv) {
-//     previewDiv = document.createElement('div');
-//     previewDiv.id = 'printer-preview';
-//     previewDiv.style.position = 'absolute';
-//     previewDiv.style.left = (width + 0) + 'px';
-//     previewDiv.style.top = '20px';
-//     // document.body.appendChild(previewDiv);
-//   }
 
   // display previewDiv canvas to img
   let img = document.createElement('img');
@@ -550,22 +529,20 @@ async function sampleNextBox() {
   placementPreviewContainer.innerHTML = '';
   placementPreviewContainer.appendChild(img);
 
-// 
-
   // place child in correct position on tile of gridContainer
   // append the image to the inside of teh tile div but at the correct position
   const tiles = document.querySelectorAll('.tile');
   // go through all tiles and reset background color
-    for (let tile of tiles) {
-        tile.style.backgroundColor = "rgba(0,0,0,1)";
-    }
+  for (let tile of tiles) {
+    tile.style.backgroundColor = "rgba(0,0,0,1)";
+}
 
   if (tiles[boxIndex]) {
     // tiles[boxIndex].appendChild(img);
     tiles[boxIndex].style.backgroundColor = "rgba(45,45,242,1)"
   }
   // 
-  console.log("SENDING ");
+//   console.log("SENDING ");
   sendCoordinateBitmap(getGridCoordinate(GRID_SIZE, boxIndex));
   // small delay
     await new Promise(resolve => setTimeout(resolve, 1000));    
@@ -576,10 +553,7 @@ async function sampleNextBox() {
     console.log(packagedRows.length);
 
     // Send all rows sequentially
-    let dataIndex = 0;
-    // for (let row of packagedRows) {
-    //     console.log("Row from sender: " + dataIndex);
-    //   serial.write(row);
+    // let dataIndex = 0;
 
     for (let i = 0; i < packagedRows.length; i++) {
         serial.write(packagedRows[i]);
@@ -602,7 +576,6 @@ async function sampleNextBox() {
                 if (inString == 'C') {
                     confirmed = true;
                 }
-                
             }
         }
 
@@ -613,24 +586,11 @@ async function sampleNextBox() {
         inString = null;
     }
     
-    // serial.write('Y'); // Send end signal
-    // serial.write(12345);
     packagedRows = null;
     isProcessing = false;
   } finally {
     isProcessing = false;
   }
-
-  // sendCoordinateBitmap(getGridCoordinate(GRID_SIZE, boxIndex));
-
-
-  // Send data to printer
-  // sendCoordinateBitmap(getGridCoordinate(GRID_SIZE, boxIndex));
-  
-
-  // show last page 
-  // setTimeout(placementShow, 15000);
-    
 
   // return the printer preview
   return printerPreview;
@@ -651,25 +611,9 @@ function packagePrinterData(inputImage) {
     // console.log(rotated.width, rotated.height);
     rotated.loadPixels();
  
-     //----------------------------------------------------------------
-    // // Create and style the image element
-    // let img2 = document.createElement('img');
-    // img2.src = rotated.elt.toDataURL();
-    // img2.style.width = '100%';
-    // img2.style.height = 'auto';
-    // // img.style.transform = 'rotate(-90deg)'; // Adjust rotation if needed
-
-    // // Add to the correct tile
-    // const tiles = document.querySelectorAll('.tile');
-
-    // tiles[11].innerHTML = ''; // Clear existing content
-    // tiles[11].appendChild(img2);
-
-    // console.log(rotated.width, rotated.height);
     let packagedRows = [];
     
     // Process one row at a time
-    // console.log(rotated.height);
     for (let y = 0; y < rotated.height; y++) {
       let rowData = new Uint8Array(BYTES_PER_ROW);
       
@@ -887,30 +831,6 @@ function sendCoordinateBitmap(coordinate) {
     serial.write('F'); // End text bitmap command
 }
 
-// ------------------------------------------------OLD CODE
-// function createCoordinateBitmap(coordinate) {
-//     // Create 8x16 bitmap (8 high, 16 wide - space for two characters)
-//     const bitmap = [];
-
-//     // Each row needs 2 bytes to represent 16 pixels
-//     for (let i = 0; i < 8; i++) {
-//         bitmap.push(new Uint8Array(2));
-//     }
-
-//     // Get patterns for both characters
-//     const char1 = LETTER_BITMAPS[coordinate.charCodeAt(0) - 65]; // A=0, B=1, etc
-//     const char2 = NUMBER_BITMAPS[parseInt(coordinate[1]) - 1];    // 1=0, 2=1, etc
-
-//     // Combine patterns into single bitmap
-//     for (let y = 0; y < 7; y++) {
-//         bitmap[y][0] = char1[y];
-//         bitmap[y][1] = char2[y];
-//     }
-//     console.log(bitmap);
-//     return bitmap;
-
-// }
-// ------------------------------------------------OLD CODE
 function createCoordinateBitmap(coordinate) {
     const bitmap = [];
     const height = 14;
