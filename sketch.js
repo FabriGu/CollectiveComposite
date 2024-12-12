@@ -715,10 +715,14 @@ function simulatePrinterOutput(image) {
     for (let y = 0; y < rotated.height; y++) {    
     // Process each pixel in the row first for pattern detection
     let rowPixels = new Array(rotated.width).fill(0);
-      console.log("Pixels length: " + rotated.pixels.length);
+    //   console.log("Pixels length: " + rotated.pixels.length);
     
     for (let x = 0; x < rotated.width; x++) {
         let loc = (x + y * rotated.width);
+
+        //for display image
+        let previewLoc = loc * 4;
+
         let r = rotated.pixels[loc * 4];
         let g = rotated.pixels[loc * 4 + 1];
         let b = rotated.pixels[loc * 4 + 2];
@@ -745,8 +749,6 @@ function simulatePrinterOutput(image) {
         prev_rgb = Math.floor(pr + pg + pb);
         }
         
-        //for display image
-        let previewLoc = loc * 4;
         
         // Determine pixel value based on patterns and thresholds
         if (rgb < THRESHOLD_VVLIGHT_GREY &&
@@ -786,6 +788,42 @@ function simulatePrinterOutput(image) {
             ditheredPreview.pixels[previewLoc + 2] = 255; // B
             ditheredPreview.pixels[previewLoc + 3] = 255; // A
         }
+         // If we're in the text region (top 14 rows, last 28 pixels), 
+        // make it white first
+        if (y < 14 && x >= rotated.width - 28) {
+            ditheredPreview.pixels[previewLoc] = 255;     // R
+            ditheredPreview.pixels[previewLoc + 1] = 255; // G
+            ditheredPreview.pixels[previewLoc + 2] = 255; // B
+            ditheredPreview.pixels[previewLoc + 3] = 255; // A
+            // continue; // Skip the normal image processing for this area
+        }
+
+
+        // applying the text bitmap
+        if (y < 14 && x >= rotated.width - 28) {
+            // Calculate position in text bitmap
+            let textX = x - (rotated.width - 28);
+            let textY = y;
+            
+            // Get the current grid box number
+            let boxIndex = gridSequence[currentBoxIndex - 1];
+            let coordinate = getGridCoordinate(GRID_SIZE, boxIndex);
+            
+            // Get the letter and number bitmaps
+            let letterBitmap = LETTER_BITMAPS[coordinate.charCodeAt(0) - 65];
+            let numberBitmap = NUMBER_BITMAPS[parseInt(coordinate[1]) - 1];
+            
+            // Check if this pixel should be black based on the text bitmaps
+            let letterPos = textX < 14 ? letterBitmap[textY] & (1 << (13 - textX)) : 0;
+            let numberPos = textX >= 14 ? numberBitmap[textY] & (1 << (27 - textX)) : 0;
+            
+            if (letterPos || numberPos) {
+                ditheredPreview.pixels[previewLoc] = 0;     // R
+                ditheredPreview.pixels[previewLoc + 1] = 0; // G
+                ditheredPreview.pixels[previewLoc + 2] = 0; // B
+            }
+        }
+        // applying the text bitmap
     }
     }
 
