@@ -102,7 +102,7 @@ let timerOn = false;
 // Watch for changes in buttonInput
 function updateTimerState(value) {
     buttonInput = value;
-    console.log(buttonInput);
+    // console.log(buttonInput);
     if (buttonInput == 1 && !timerOn && !experiencing) {
         experiencing = true;
         startTimer();

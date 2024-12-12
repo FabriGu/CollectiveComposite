@@ -304,8 +304,6 @@ const PRINTER_IMAGE_HEIGHT = 384; // Desired height in pixels
 // CLAUDE: Update BYTES_PER_ROW calculation based on new width
 const BYTES_PER_ROW = PRINTER_IMAGE_HEIGHT / 8; // Number of bytes needed for each row
 
-let inString= null;
-
 function preload() {
   faceMesh = ml5.faceMesh(options);
 }
@@ -434,7 +432,7 @@ function generateRandomSequence(length) {
 }
 
 function serialEvent() {
-    inString = serial.readStringUntil("\n");
+  let inString = serial.readStringUntil("\n");
   if (inString) {
     console.log("Received:", inString);
     inString = inString.trim();  // Remove whitespace/newlines
@@ -443,8 +441,6 @@ function serialEvent() {
       // placementShow;
       setTimeout(placementShow, 50);
 
-    }else if(inString == "W"){
-      console.log("gettingsomething");
     }
     let value = parseInt(inString);
     if (!isNaN(value)) {
@@ -477,7 +473,6 @@ async function sampleNextBox() {
     return;
   }
   isProcessing = true;
-//   console.log(faces.length);
   if (faces.length === 0) return;
 
   const placementPreviewContainer =  document.querySelector("#previewContainer");
@@ -498,7 +493,7 @@ async function sampleNextBox() {
   boxHeight = gridHeight / GRID_SIZE;
   
   let boxIndex = gridSequence[currentBoxIndex++];
-  console.log("Box Index: " + boxIndex);
+  console.log(boxIndex);
   console.log(getGridCoordinate(GRID_SIZE, boxIndex))
   
 
@@ -547,8 +542,8 @@ async function sampleNextBox() {
   img.style.width = '100%';
   img.style.height = '100%';
 //   img.style.transform = 'rotate(-90deg)';
-  placementPreviewContainer.innerHTML = '';
-  placementPreviewContainer.appendChild(img);
+placementPreviewContainer.innerHTML = '';
+placementPreviewContainer.appendChild(img);
 
 // 
 
@@ -564,59 +559,19 @@ async function sampleNextBox() {
     // tiles[boxIndex].appendChild(img);
     tiles[boxIndex].style.backgroundColor = "rgba(45,45,242,1)"
   }
-  // 
-  console.log("SENDING ");
   sendCoordinateBitmap(getGridCoordinate(GRID_SIZE, boxIndex));
-  // small delay
-    await new Promise(resolve => setTimeout(resolve, 1000));    
 
   try {
     // let c = 0;
-    serial.write('X'); // Send start signal once
-    console.log(packagedRows.length);
-
+    serial.write('R'); // Send start signal once
+    
     // Send all rows sequentially
-    let dataIndex = 0;
-    // for (let row of packagedRows) {
-    //     console.log("Row from sender: " + dataIndex);
-    //   serial.write(row);
-
-    for (let i = 0; i < packagedRows.length; i++) {
-        serial.write(packagedRows[i]);
-        console.log("console log row i: " + i);
-
-        // Wait for confirmation of this row
-        let confirmed = false;
-        const startTime = Date.now();
-
-        while (!confirmed && (Date.now() - startTime) < 2000) {  // 2 second timeout
-            await new Promise(resolve => setTimeout(resolve, 10));  // Small delay
-            
-            // let inString = serial.readStringUntil("\n");
-            if (inString) {
-                console.log("rowConfirmIndex:", inString);
-                // let inString = serial.readStringUntil("\n");
-                // console.log(inString);
-              
-                // let rowNum = parseInt(inString.trim());
-                if (inString == 'C') {
-                    confirmed = true;
-                }
-                
-            }
-        }
-
-        if (!confirmed) {
-            console.log(`Failed to confirm row ${i}`);
-            return;  // Stop if we miss a row
-        }
-        inString = null;
+    for (let row of packagedRows) {
+      serial.write(row);
     }
     
-    // serial.write('Y'); // Send end signal
-    // serial.write(12345);
+    serial.write('E'); // Send end signal
     packagedRows = null;
-    isProcessing = false;
   } finally {
     isProcessing = false;
   }
@@ -648,7 +603,7 @@ function packagePrinterData(inputImage) {
     const THRESHOLD_BLACK = 100;
 
     let rotated = inputImage;
-    // console.log(rotated.width, rotated.height);
+    console.log(rotated.width, rotated.height);
     rotated.loadPixels();
  
      //----------------------------------------------------------------
@@ -758,7 +713,7 @@ function simulatePrinterOutput(image) {
     const THRESHOLD_BLACK = 100;
 
     let rotated = image;
-    // console.log(rotated.width, rotated.height);
+    console.log(rotated.width, rotated.height);
     rotated.loadPixels();
     // Create a separate graphics buffer for the dithered preview
     let ditheredPreview = createGraphics(PRINTER_IMAGE_HEIGHT, PRINTER_IMAGE_WIDTH);
@@ -766,12 +721,12 @@ function simulatePrinterOutput(image) {
     ditheredPreview.loadPixels();
 
     // Process one row at a time
-    // console.log(rotated.height);
-    // console.log(rotated.width)
+    console.log(rotated.height);
+    console.log(rotated.width)
     for (let y = 0; y < rotated.height; y++) {    
     // Process each pixel in the row first for pattern detection
     let rowPixels = new Array(rotated.width).fill(0);
-      console.log("Pixels length: " + rotated.pixels.length);
+      console.log(rotated.pixels.length);
     
     for (let x = 0; x < rotated.width; x++) {
         let loc = (x + y * rotated.width);
