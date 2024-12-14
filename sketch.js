@@ -559,8 +559,11 @@ async function sampleNextBox() {
   // append the preview image to the gridgif
   if (tilesGif[boxIndex]) {
     tilesGif[boxIndex].innerHTML = '';
-    tilesGif[boxIndex].appendChild(img);
-    }
+    tilesGif[boxIndex].appendChild(img.cloneNode(true));
+
+    // Add frame to GIF
+    addFrameToGif();
+  }
 
 //   console.log("SENDING ");
   // Send the coordinate data to the printer
