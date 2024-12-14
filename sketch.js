@@ -281,6 +281,7 @@ let boxWidth, boxHeight;
 let gridSequence = [];
 let currentBoxIndex = 0;
 let sampledImage = null;
+let wholeImage = null;
 
 let isProcessing = false;
 
@@ -480,8 +481,10 @@ async function sampleNextBox() {
 //   console.log(faces.length);
   if (faces.length === 0) return;
 
+  // get reference to the preview container where the dithered preview image will be displayed to the user as the image prints
   const placementPreviewContainer =  document.querySelector("#previewContainer");
   
+  // same logic as drawing grid to calculate the grid box to sample from
   let face = faces[0];
   let leftEye = face.keypoints[leftEyeKeypoint];
   let rightEye = face.keypoints[rightEyeKeypoint];
@@ -497,10 +500,12 @@ async function sampleNextBox() {
   boxWidth = gridWidth / GRID_SIZE;
   boxHeight = gridHeight / GRID_SIZE;
   
+  // Get the next box index
   let boxIndex = gridSequence[currentBoxIndex++];
-  console.log("Box Index: " + boxIndex);
-  console.log(getGridCoordinate(GRID_SIZE, boxIndex))
+//   console.log("Box Index: " + boxIndex);
+//   console.log(getGridCoordinate(GRID_SIZE, boxIndex))
   
+  // Calculate the row and column of the box
   let row = floor(boxIndex / GRID_SIZE);
   let col = boxIndex % GRID_SIZE;
   
@@ -508,15 +513,20 @@ async function sampleNextBox() {
   let x = minX + (col * boxWidth);
   let y = minY + (row * boxHeight);
 
-  // Create image at 320px width (40 bytes per row)
+  // Create image at 384px width 
   sampledImage = createGraphics(PRINTER_IMAGE_WIDTH, PRINTER_IMAGE_HEIGHT);
   sampledImage.copy(video, x, y, boxWidth, boxHeight, 0, 0, PRINTER_IMAGE_WIDTH, PRINTER_IMAGE_HEIGHT);
-  
+
+  // whole image also sampled 
+  wholeImage = createGraphics(PRINTER_IMAGE_WIDTH, PRINTER_IMAGE_HEIGHT);
+  // copy the entire video feed frame at that moment into wholeimage variable
+  wholeImage.copy(video, 0, 0, width, height, 0, 0, PRINTER_IMAGE_WIDTH, PRINTER_IMAGE_HEIGHT);
+
+  // package the rows in such a manner for arduino and thermal printer to recieve and be able to read them respectively
   let packagedRows = packagePrinterData(sampledImage);
   
   // Create printer preview
   let printerPreview = simulatePrinterOutput(sampledImage);
-//   sampledImage = printerPreview;
 
   // display previewDiv canvas to img
   let img = document.createElement('img');
@@ -525,54 +535,61 @@ async function sampleNextBox() {
   // Set the size of the img to match the size of the tile div
   img.style.width = '100%';
   img.style.height = '100%';
-//   img.style.transform = 'rotate(-90deg)';
+
+  // append teh image to the inside of teh tile div but at the correct position
   placementPreviewContainer.innerHTML = '';
   placementPreviewContainer.appendChild(img);
 
+
   // place child in correct position on tile of gridContainer
-  // append the image to the inside of teh tile div but at the correct position
+  // append the image to the inside of the tile div but at the correct position
   const tiles = document.querySelectorAll('.tile');
   // go through all tiles and reset background color
   for (let tile of tiles) {
     tile.style.backgroundColor = "rgba(0,0,0,1)";
 }
-
+  // change the color of the cell that was just sampled
   if (tiles[boxIndex]) {
-    // tiles[boxIndex].appendChild(img);
     tiles[boxIndex].style.backgroundColor = "rgba(45,45,242,1)"
   }
-  // 
-//   console.log("SENDING ");
-  sendCoordinateBitmap(getGridCoordinate(GRID_SIZE, boxIndex));
-  // small delay
-    await new Promise(resolve => setTimeout(resolve, 1000));    
 
+  // append the image to the gridgif
+  const tilesGif = document.querySelectorAll('.tileGif');
+
+  // append the preview image to the gridgif
+  if (tilesGif[boxIndex]) {
+    tilesGif[boxIndex].innerHTML = '';
+    tilesGif[boxIndex].appendChild(img);
+    }
+
+//   console.log("SENDING ");
+  // Send the coordinate data to the printer
+  sendCoordinateBitmap(getGridCoordinate(GRID_SIZE, boxIndex));
+  // small delay to ensure next serial data does not conflict
+  await new Promise(resolve => setTimeout(resolve, 1000));    
+
+  // attempt to send data row by row
   try {
     // let c = 0;
     serial.write('X'); // Send start signal once
-    console.log(packagedRows.length);
+    // console.log(packagedRows.length);
 
     // Send all rows sequentially
-    // let dataIndex = 0;
-
     for (let i = 0; i < packagedRows.length; i++) {
         serial.write(packagedRows[i]);
-        console.log("console log row i: " + i);
+        // console.log("console log row i: " + i);
 
         // Wait for confirmation of this row
         let confirmed = false;
         const startTime = Date.now();
 
         while (!confirmed && (Date.now() - startTime) < 2000) {  // 2 second timeout
-            await new Promise(resolve => setTimeout(resolve, 10));  // Small delay
-            
-            // let inString = serial.readStringUntil("\n");
+            await new Promise(resolve => setTimeout(resolve, 10));  // Small delay to ensure message is received and does not overload serial
+
             if (inString) {
                 console.log("rowConfirmIndex:", inString);
-                // let inString = serial.readStringUntil("\n");
                 // console.log(inString);
               
-                // let rowNum = parseInt(inString.trim());
                 if (inString == 'C') {
                     confirmed = true;
                 }
